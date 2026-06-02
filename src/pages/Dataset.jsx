@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../lib/supabaseClient"; // PENTING: Import koneksi Supabase
 import "../styles/dataset.css";
 
 export default function Dataset() {
@@ -17,16 +16,26 @@ export default function Dataset() {
   const fetchPohon = async () => {
     setLoading(true);
     try {
-      let { data: pohon, error } = await supabase
-        .from('pohon_peneduh')
-        .select('*')
-        .order('id', { ascending: true });
+      const response = await fetch("/data/pohon_peneduh.json");
+      const json = await response.json();
       
-      if (error) throw error;
+      const mappedData = (json.features || []).map((f, i) => {
+        const props = f.properties || {};
+        return {
+          id: i,
+          lokasi: props.LOKASI || "Tidak diketahui",
+          jenis: props.JENIS || "",
+          diameter: props.DIAMETER || "",
+          suhu_luar: props["SUHU DILUAR \nPOHON"] || "",
+          kondisi: props.KONDISI || "",
+          latitude: props["Latitude (Y)_D"] || (f.geometry?.coordinates?.[1] || 0),
+          longitude: props["Longitude (X)_D"] || (f.geometry?.coordinates?.[0] || 0),
+        };
+      });
       
-      setData(pohon || []);
+      setData(mappedData);
     } catch (error) {
-      console.error("Gagal mengambil data dari Supabase:", error.message);
+      console.error("Gagal mengambil data dari JSON:", error.message);
     } finally {
       setLoading(false);
     }
@@ -91,14 +100,14 @@ export default function Dataset() {
     a.remove();
   };
 
-  if (loading) return <div className="ds-loading">Memuat data dari Database Cloud...</div>;
+  if (loading) return <div className="ds-loading">Memuat data...</div>;
 
   return (
     <div className="ds-page">
       <div className="ds-card">
         <div className="ds-head">
           <div>
-            <h1 className="ds-title">Manajemen Dataset (Supabase)</h1>
+            <h1 className="ds-title">Manajemen Dataset</h1>
             <p className="ds-sub">
               Menampilkan <b>{filtered.length}</b> dari <b>{data.length}</b> data
             </p>
