@@ -202,7 +202,7 @@ function AppContent() {
           storageKey="proyekSIGTour"
           onComplete={() => console.log("🎉 Tour selesai!")}
           onSkip={() => console.log("Tour dilewati")}
-          autoStart={true}
+          autoStart={false}
         />
       )}
     </div>
